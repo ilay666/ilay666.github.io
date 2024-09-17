@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор и сканер QR-кодов</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.qrcode/1.0/jquery.qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 20px; }
+        .tab { display: inline-block; margin: 0 10px; cursor: pointer; padding: 10px; border: 1px solid #ccc; }
+        .tab-content { display: none; }
+        .active { background-color: #f0f0f0; }
+    </style>
+</head>
+<body>
+    <h1>Генератор и сканер QR-кодов</h1>
+    
+    <div>
+        <div class="tab active" id="generate-tab">Создать QR-код</div>
+        <div class="tab" id="scan-tab">Сканировать QR-код</div>
+    </div>
+    
+    <div id="generate-content" class="tab-content" style="display:block;">
+        <input type="text" id="text-input" placeholder="Введите текст или URL" />
+        <button id="generate-btn">Создать QR-код</button>
+        <div id="qr-code" style="margin-top: 20px;"></div>
+    </div>
+    
+    <div id="scan-content" class="tab-content">
+        <div id="reader" style="width: 300px; height: 300px; margin: auto;"></div>
+        <p id="scan-result"></p>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            // Переключение вкладок
+            $('.tab').click(function() {
+                $('.tab').removeClass('active');
+                $(this).addClass('active');
+                $('.tab-content').hide();
+                $('#' + $(this).attr('id').replace('-tab', '-content')).show();
+                
+                // Если выбрана вкладка сканирования, инициализируем сканер
+                if ($(this).attr('id') === 'scan-tab') {
+                    startScanner();
+                } else {
+                    stopScanner();
+                }
+            });
+
+            // Генерация QR-кода
+            $('#generate-btn').click(function() {
+                const text = $('#text-input').val();
+                $('#qr-code').empty();
+                if (text) {
+                    $('#qr-code').qrcode(text);
+                } else {
+                    alert('Пожалуйста, введите текст или URL.');
+                }
+            });
+
+            let html5QrcodeScanner;
+
+            function startScanner() {
+                html5QrcodeScanner = new Html5Qrcode("reader");
+                html5QrcodeScanner.start(
+                    { facingMode: "environment" }, 
+                    {
+                        fps: 10, 
+                        qrbox: 250 
+                    },
+                    (decodedText, decodedResult) => {
+                        // Успех распознавания QR-кода
+                        $('#scan-result').text(`Распознанный текст: ${decodedText}`);
+                        stopScanner();
+                    },
+                    (errorMessage) => {
+                        // Здесь можно обработать ошибки
+                    }
+                ).catch(err => {
+                    console.error(`Ошибка при запуске сканера: ${err}`);
+                });
+            }
+
+            function stopScanner() {
+                if (html5QrcodeScanner) {
+                    html5QrcodeScanner.stop().catch(err => {
+                        console.error(`Ошибка при остановке сканера: ${err}`);
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html>
